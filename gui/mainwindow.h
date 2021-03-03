@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QSerialPort>
 #include <QSerialPortInfo>
-#include "qcustomplot.h"
 #include <QTimeLine>
 
 
@@ -18,11 +17,9 @@
 #define RECIBO_DATOS_LSB    7
 #define RECIBO_DATOS_MSBH   8
 #define RECIBO_DATOS_LSBH   9
-#define FIN_DE_TRAMA        14
-#define RECIBO_TIEMPO_RIEGO 10
-#define RECIBO_HORAS        11
-#define RECIBO_MINUTOS      12
-#define RECIBO_SEGUNDOS     13
+#define FIN_DE_TRAMA        11
+#define RECIBO_SIGNAL_RIEGO  10
+
 
 namespace Ui {
 class MainWindow;
@@ -66,6 +63,7 @@ private:
     bool riegoON = false;
     bool ventON = false;
     QList<double> dataADC;
+    QTimeLine *timeLine = new QTimeLine(1000, this);
 
 };
 

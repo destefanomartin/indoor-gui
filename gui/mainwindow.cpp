@@ -4,7 +4,7 @@
 
 #include <QSerialPortInfo>
 #include <QMessageBox>
-int SET_POINT_RIEGO = 3600;
+int SET_POINT_RIEGO = 10;
 
 int i = 0;
 
@@ -25,8 +25,11 @@ void MainWindow::initwid()
     ui->spinBox_hum->setRange(10,90);
     ui->spinBox_riego->setRange(1,49);
    // ui->progressBar->setRange(0, SET_POINT_RIEGO);
-
-
+    ui->progressBar->setRange(0,SET_POINT_RIEGO);
+    timeLine->setFrameRange(0,SET_POINT_RIEGO) ;
+    timeLine->setDuration(SET_POINT_RIEGO*1000);
+    connect(timeLine, &QTimeLine::frameChanged, ui->progressBar, &QProgressBar::setValue);
+    connect(ui->tempRiego, &QPushButton::clicked, timeLine, &QTimeLine::start);
 }
 
 MainWindow::~MainWindow()
@@ -104,8 +107,11 @@ void MainWindow::on_ButtonEnviar_clicked()
     datos.append(riego);
     datos.append("#");
     port.write(datos.data(), datos.size());
-   // ui->progressBar->setRange(0, (riego.toInt())*3600);
     SET_POINT_RIEGO = (riego.toInt())*3600;
+    ui->progressBar->setRange(0,SET_POINT_RIEGO);
+    timeLine->setFrameRange(0,SET_POINT_RIEGO) ;
+    timeLine->setDuration(SET_POINT_RIEGO*10);
+    ui->tempRiego->click();
 }
 
 
@@ -208,10 +214,9 @@ void MainWindow::on_datosRecibidos()
 void MainWindow::procesarDatosRecibidos()
 {
     static unsigned int estadoRx = ESPERO_MENSAJE;
-    static int flag = 2, indexriego;
-    int RiegoTime = 0;
+    static int flag = 2;
+    char RiegoTime;
     static char valort[] = {'0', '0'};
-    QString HTime, STime, MTime;
 
     for (int i = 0; i < datosRecibidos.count(); i++) {
         unsigned char dato = datosRecibidos.at(i);
@@ -239,7 +244,7 @@ void MainWindow::procesarDatosRecibidos()
             }
             else if ( dato == 'r' )
             {
-                estadoRx = RECIBO_TIEMPO_RIEGO;
+                estadoRx = RECIBO_SIGNAL_RIEGO;
             }
             else
                estadoRx = FIN_DE_TRAMA;
@@ -252,42 +257,9 @@ void MainWindow::procesarDatosRecibidos()
             else if (dato == 'V')
                 estadoRx = RECIBO_STATUS_VENT;
             break;
-        case RECIBO_TIEMPO_RIEGO:
+        case RECIBO_SIGNAL_RIEGO:
         {
-            if ( dato == 'h' )
-                estadoRx = RECIBO_HORAS;
-            else if ( dato == 'm' )
-                estadoRx = RECIBO_MINUTOS;
-            else if ( dato == 's' )
-                estadoRx = RECIBO_SEGUNDOS;
-            else
-                estadoRx = ESPERO_MENSAJE;
-            break;
-        }
-        case RECIBO_HORAS:
-        {
-            if (dato == 'm')
-            estadoRx = RECIBO_MINUTOS;
-
-            else
-                HTime.append(dato);
-
-            break;
-        }
-
-        case RECIBO_MINUTOS:
-        {
-            if (dato == 's')
-            estadoRx = RECIBO_SEGUNDOS;
-            else
-            MTime.append(dato);
-            break;
-         }
-        case RECIBO_SEGUNDOS:
-        {
-            STime.append(dato);
-            indexriego++;
-            if (indexriego == 2)
+            RiegoTime = dato;
             estadoRx = FIN_DE_TRAMA;
             break;
         }
@@ -352,23 +324,10 @@ void MainWindow::procesarDatosRecibidos()
                 ui->lcdNumber_2->display(valort);
                 else if (flag == 0)
                 ui->lcdNumber->display(valort);
-                indexriego = 0;
-                RiegoTime+=HTime.toInt() * 3600;
-                RiegoTime+=STime.toInt();
-                RiegoTime+=MTime.toInt()*60;
-                if (RiegoTime > 0)
+                if ( RiegoTime == '1'  )
                 {
-                    int value = SET_POINT_RIEGO - RiegoTime;
-                    //ui->progressBar->setValue(value);
+                    ui->tempRiego->click();
                 }
-                ui->lcdNumber_3->display(HTime.toInt());
-                ui->lcdNumber_4->display(MTime.toInt());
-                ui->lcdNumber_5->display(STime.toInt());
-                HTime.clear();
-                STime.clear();
-                MTime.clear();
-                RiegoTime = 0;
-
             }
             estadoRx = ESPERO_MENSAJE;
             break;
