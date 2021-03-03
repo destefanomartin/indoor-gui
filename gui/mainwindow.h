@@ -17,8 +17,8 @@
 #define RECIBO_DATOS_LSB    7
 #define RECIBO_DATOS_MSBH   8
 #define RECIBO_DATOS_LSBH   9
-#define FIN_DE_TRAMA        11
-#define RECIBO_SIGNAL_RIEGO  10
+#define FIN_DE_TRAMA        10
+
 
 
 namespace Ui {
@@ -36,7 +36,6 @@ public:
     void on_ButtonConectar_clicked();
     void procesarDatosRecibidos();
     void initwid ();
-
 
 private slots:
     void on_pushButton_7_clicked();

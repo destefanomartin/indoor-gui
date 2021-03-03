@@ -4,7 +4,7 @@
 
 #include <QSerialPortInfo>
 #include <QMessageBox>
-int SET_POINT_RIEGO = 10;
+int SET_POINT_RIEGO = 3600;
 
 int i = 0;
 
@@ -29,7 +29,8 @@ void MainWindow::initwid()
     timeLine->setFrameRange(0,SET_POINT_RIEGO) ;
     timeLine->setDuration(SET_POINT_RIEGO*1000);
     connect(timeLine, &QTimeLine::frameChanged, ui->progressBar, &QProgressBar::setValue);
-    connect(ui->tempRiego, &QPushButton::clicked, timeLine, &QTimeLine::start);
+    connect(ui->statusbar, &QLineEdit::textChanged, timeLine, &QTimeLine::start);
+    timeLine->setLoopCount(0);
 }
 
 MainWindow::~MainWindow()
@@ -94,6 +95,7 @@ void MainWindow::on_ButtonEnviar_clicked()
     static QString temp  ;
     static QString hum  ;
     static QString riego ;
+    timeLine->stop();
     QByteArray datos;
     datos.append('$');
     datos.append('t');
@@ -110,8 +112,8 @@ void MainWindow::on_ButtonEnviar_clicked()
     SET_POINT_RIEGO = (riego.toInt())*3600;
     ui->progressBar->setRange(0,SET_POINT_RIEGO);
     timeLine->setFrameRange(0,SET_POINT_RIEGO) ;
-    timeLine->setDuration(SET_POINT_RIEGO*10);
-    ui->tempRiego->click();
+    timeLine->setDuration(SET_POINT_RIEGO*1000);
+    timeLine->start();
 }
 
 
@@ -242,10 +244,6 @@ void MainWindow::procesarDatosRecibidos()
             {
                 estadoRx = RECIBO_STATUS;
             }
-            else if ( dato == 'r' )
-            {
-                estadoRx = RECIBO_SIGNAL_RIEGO;
-            }
             else
                estadoRx = FIN_DE_TRAMA;
             break;
@@ -257,12 +255,6 @@ void MainWindow::procesarDatosRecibidos()
             else if (dato == 'V')
                 estadoRx = RECIBO_STATUS_VENT;
             break;
-        case RECIBO_SIGNAL_RIEGO:
-        {
-            RiegoTime = dato;
-            estadoRx = FIN_DE_TRAMA;
-            break;
-        }
         case RECIBO_STATUS_ILUM:
             if ( dato == '1')
             {
@@ -324,16 +316,12 @@ void MainWindow::procesarDatosRecibidos()
                 ui->lcdNumber_2->display(valort);
                 else if (flag == 0)
                 ui->lcdNumber->display(valort);
-                if ( RiegoTime == '1'  )
-                {
-                    ui->tempRiego->click();
-                }
-            }
             estadoRx = ESPERO_MENSAJE;
             break;
         }
     }
     datosRecibidos.clear();
+}
 }
 
 
